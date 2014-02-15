@@ -1,0 +1,44 @@
+# Author: Vlad Morariu
+# Created: 2013-12-04
+#
+# Based on: http://www.cmake.org/Wiki/CMake/Tutorials/How_to_create_a_ProjectConfig.cmake_file
+# - Config file for the sequences package
+# It defines the following variables
+#  SEQUENCES_INCLUDE_DIRS - include directories
+#  SEQUENCES_LIBRARIES    - libraries to link against
+#  SEQUENCES_EXECUTABLE   - the bar executable
+#
+# Copyright (c) 2009-2013 Vlad Morariu
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Compute paths
+get_filename_component(SEQUENCES_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(SEQUENCES_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+
+# For header-only code, find library dependencies of sequences code
+find_package(OpenCV REQUIRED core highgui)
+find_package(LibArchive REQUIRED)
+set(SEQUENCES_INCLUDE_DIRS "${SEQUENCES_INCLUDE_DIRS}"
+    "${LibArchive_INCLUDE_DIRS}" "${OpenCV_INCLUDE_DIRS}")
+set(SEQUENCES_LIBRARIES "${OpenCV_LIBS}" "${LibArchive_LIBRARIES}")
+
+# Our library dependencies (contains definitions for IMPORTED targets)
+if(NOT TARGET sequences AND NOT sequences_BINARY_DIR)
+  include("${SEQUENCES_CMAKE_DIR}/sequences-targets.cmake")
+endif()
+
+# These are IMPORTED targets created by sequences-targets.cmake
+set(SEQUENCES_EXECUTABLE sequences)
+#set(SEQUENCES_LIBRARIES sequences_lib)

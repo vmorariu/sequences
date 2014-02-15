@@ -1,0 +1,148 @@
+# Author: Vlad Morariu
+# Created: 2011-08-31
+#
+# Copyright (c) 2009-2013 Vlad Morariu
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+from distutils.core import setup, Command
+from distutils.extension import Extension
+from Cython.Distutils import build_ext
+import numpy
+import sys
+import os
+
+
+class TestCmd(Command):
+    """A test command class that runs test suite on newly built code before
+       installing it by adding the temporary build path to sys.path.  Based on 
+       http://pytest.org/latest/goodpractises.html and         
+       https://mail.python.org/pipermail/distutils-sig/2002-January/002714.html      
+       Run using this command on the commandline: "python setup.py test".
+    """
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        build = self.get_finalized_command('build')
+        self.build_purelib = build.build_purelib
+        self.build_platlib = build.build_platlib
+
+    def run(self):
+        import sys
+        self.run_command('build')  # make sure code is build and in temp path
+        old_path = sys.path[:]  # save old paths and then prepend temp paths
+        sys.path.insert(0, self.build_purelib)
+        sys.path.insert(0, self.build_platlib)
+
+        import unittest
+        import tests  # this should be in self.build_[plat,pure]lib
+        tests.DATA_DIR = '${CMAKE_CURRENT_SOURCE_DIR}/../data'
+        suite = unittest.TestLoader().loadTestsFromModule(tests)
+        ret = unittest.TextTestRunner().run(suite)
+        sys.path = old_path[:]
+        if (ret.errors != []) or (ret.failures != []):
+            raise SystemExit(-1)
+
+
+def _fix_commandline_flags(flags=('--prefix',)):
+   """Deal with windows bug in distutils.command.install.convert_paths where
+   distutils.util.convert_path converts "C:/path" to "C:path"."""
+   for flag in flags:
+      try:
+         i = sys.argv.index(flag)
+      except ValueError:
+         continue
+      try:
+         sys.argv[i + 1] = os.path.normpath(sys.argv[i + 1])         
+      except IndexError:
+         continue
+
+
+def _libs(libs, sep):
+    """Return library names w/o lib prefix, extension or directory."""
+    libs = [os.path.splitext(os.path.basename(s))[0] for s in libs.split(sep)]    
+    libs = [l[:3].replace('lib', '') + l[3:] for l in libs]
+    return libs
+
+
+def _dirs(libs, sep):
+    """Return library directories."""
+    return list(set(os.path.dirname(s) for s in libs.split(sep)))
+
+
+#
+# Done with function/class definitions... begin setup code:
+#
+
+include_dirs = ['${CMAKE_CURRENT_SOURCE_DIR}/../include',
+                '${CMAKE_CURRENT_SOURCE_DIR}/../src',
+                '${CMAKE_CURRENT_SOURCE_DIR}',  numpy.get_include()]
+include_dirs += '${OpenCV_INCLUDE_DIRS}'.split(';')
+include_dirs += '${LibArchive_INCLUDE_DIRS}'.split(';')
+libraries = (_libs('${OpenCV_LIBS_OPT}', ';') +
+             _libs('${LibArchive_LIBRARY}', ';'))
+library_dirs = (_dirs('${OpenCV_LIBS_OPT}', ';') +
+                _dirs('${LibArchive_LIBRARY}', ';'))
+
+extra_compile_args = ['-O2', '-DSEQUENCES_HEADER_ONLY']
+extra_src = []
+
+if not sys.platform == 'win32':
+    extra_compile_args += ['-DNDEBUG']
+
+if '${BUILD_MULTIPNG}' == 'ON':   # "-DBUILD_MULTIPNG=ON" cmake flag
+    libraries += ['png']
+    extra_src=['${CMAKE_CURRENT_SOURCE_DIR}/../src/MultiPng.cpp']
+    extra_compile_args += ['-DUSE_MULTIPNG']
+
+ext_modules = [
+    Extension(
+        "sequence_reader",
+        ["${CMAKE_CURRENT_SOURCE_DIR}/sequence_reader.pyx",
+         "${CMAKE_CURRENT_SOURCE_DIR}/opencv2numpy.cpp"] + extra_src,
+        language="c++",
+        include_dirs=include_dirs,
+        libraries=libraries,
+        library_dirs=library_dirs,
+        extra_compile_args=extra_compile_args),
+    Extension(
+        "sequence_writer",
+        ["${CMAKE_CURRENT_SOURCE_DIR}/sequence_writer.pyx",
+         "${CMAKE_CURRENT_SOURCE_DIR}/opencv2numpy.cpp"] + extra_src,
+        language="c++",
+        include_dirs=include_dirs,
+        libraries=libraries,
+        library_dirs=library_dirs,
+        extra_compile_args=extra_compile_args)]
+
+for e in ext_modules:
+    e.cython_directives = {"embedsignature": True}
+    e.cython_c_in_temp = 1
+
+_fix_commandline_flags()  # for Windows, replace forward slash (passed by CMake) 
+
+setup(
+    name='sequences',
+    version='${VERSION}',
+    author='Vlad Morariu',
+    author_email='morariu@umiacs.umd.edu',
+    license='Apache License 2.0',
+    ext_modules=ext_modules,
+    cmdclass={'build_ext': build_ext, 'test': TestCmd},
+    packages=[''],
+    package_dir={'': os.path.normpath('${CMAKE_CURRENT_SOURCE_DIR}')},  # in Windows the forward slash causes problems
+    extra_path='sequences')
+
