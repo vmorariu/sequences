@@ -113,7 +113,7 @@ or .lib file. For example:
 To install both C/C++ code and python code to a non-standard prefix path (i.e.,
 not /usr/ on Linux, not C:/Program Files/ on Windows):
 
-    cmake -DMAKE_INSTALL_PREFIX='some other path' ..
+    cmake -DCMAKE_INSTALL_PREFIX='some other path' ..
 
 To install the python extension to the user's local directory (no need for
 admin privileges; overrides installation prefix if it is also provided):
@@ -131,7 +131,7 @@ Also, on Windows, if libarchive is compiled only with Zlib support (assuming
 you have a static version of zlib named 'zlibstat.lib') you would need to use
 the following command:
 
-    cmake -DLibArchive_INCLUDE_DIR="${LIBARCHIVE_PATH}/include -DLibArchive_LIBRARY="${LIBARCHIVE_PATH}/lib/archive_static.lib;${ZLIB_PATH}/zlibstat.lib;advapi32.lib;user32.lib" ..
+    cmake -DLibArchive_INCLUDE_DIR="${LIBARCHIVE_PATH}/include" -DLibArchive_LIBRARY="${LIBARCHIVE_PATH}/lib/archive_static.lib;${ZLIB_PATH}/zlibstat.lib;advapi32.lib;user32.lib" ..
 
 The advapi32.lib and user32.lib files are standard system files that also need
 to be linked in statically.
