@@ -23,7 +23,7 @@ add_library(sequences_static STATIC SequenceReader.cpp SequenceWriter.cpp ${MULT
 target_link_libraries(sequences_static ${OpenCV_LIBS} ${LibArchive_LIBRARIES})
 target_compile_definitions(sequences_static PUBLIC SEQUENCES_STATIC)
 set_target_properties(sequences_static PROPERTIES
-  PUBLIC_HEADER "SequenceReader.h;SequenceWriter.h")
+  PUBLIC_HEADER "../include/SequenceReader.h;../include/SequenceWriter.h")
 install(TARGETS sequences_static EXPORT sequences-targets
   RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
   ARCHIVE DESTINATION "${INSTALL_LIB_DIR}" COMPONENT dev
@@ -36,7 +36,7 @@ target_link_libraries(sequences_shared ${OpenCV_LIBS} ${LibArchive_LIBRARIES})
 target_compile_definitions(sequences_shared PRIVATE SEQUENCES_EXPORTS)
 set_target_properties(sequences_shared PROPERTIES OUTPUT_NAME sequences)
 set_target_properties(sequences_shared PROPERTIES
-  PUBLIC_HEADER "SequenceReader.h;SequenceWriter.h")
+  PUBLIC_HEADER "../include/SequenceReader.h;../include/SequenceWriter.h")
 install(TARGETS sequences_shared EXPORT sequences-targets
   RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
   LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT dev
