@@ -1,5 +1,12 @@
 # Author: Vlad Morariu
 # Created: 2013-11-14
+# Description: This CMake config is adapted from the CMake tutorial:
+#
+#  https://cmake.org/Wiki/CMake/Tutorials/How_to_create_a_ProjectConfig.cmake_file
+#
+# The tutorial content is provided by cmake.org under the Attribution2.5
+# license (https://creativecommons.org/licenses/by/2.5/). The modifications to
+# the tutorial are provided under the following license:
 #
 # Copyright (c) 2009-2014 Vlad Morariu
 #
@@ -43,7 +50,7 @@ set(INSTALL_INCLUDE_DIR include/sequences CACHE PATH
 if(WIN32 AND NOT CYGWIN)
   set(DEF_INSTALL_CMAKE_DIR CMake)
 else()
-  set(DEF_INSTALL_CMAKE_DIR lib/CMake/sequences)
+  set(DEF_INSTALL_CMAKE_DIR lib/cmake/sequences)
 endif()
 set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
   "Installation directory for CMake files")
